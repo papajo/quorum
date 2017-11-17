@@ -1,30 +1,42 @@
 package memory
 
+import (
+	"crypto/sha512"
+	"encoding/base64"
+)
+
 type MemoryPrivateTransactionManger struct {
-	nodes map[string][]byte
+	privDB map[string][]byte
 }
 
 // Send payload to list of to addresses
+// Store payload into local repository, returning key (hash of payload)
 func (g *MemoryPrivateTransactionManger) Send(data []byte, from string, to []string) (out []byte, err error) {
-	for i := 0; i < len(to); i++ {
-		g.nodes[to[i]] = data
-	}
+	h := sha512.New512_256()
 
-	//Out is response code
-	return
+	h.Write(data)
+
+	out = h.Sum(nil)
+
+	b64Key := base64.StdEncoding.EncodeToString(out)
+	g.privDB[b64Key] = data
+
+	//Out is hash key for retrieval of the payload
+	return out, nil
 }
 
-// Receive payload.
+// Receive Retrieve Payload for the key (data).
 func (g *MemoryPrivateTransactionManger) Receive(data []byte) ([]byte, error) {
 
-	pl := g.nodes[string(data)]
+	b64Key := base64.StdEncoding.EncodeToString(data)
+	pl := g.privDB[b64Key]
 
 	return pl, nil
 }
 
-// MustNew Instantiates the in memory fake nodes
+// MustNew Instantiates the in memory database
 func MustNew(configPath string) *MemoryPrivateTransactionManger {
 	return &MemoryPrivateTransactionManger{
-		nodes: make(map[string][]byte),
+		privDB: make(map[string][]byte),
 	}
 }

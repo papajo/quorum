@@ -13,9 +13,9 @@ func TestSendAndReceive(t *testing.T) {
 	to := []string{"A", "B", "C"}
 	from := "sendNode"
 
-	g.Send(data, from, to)
+	key, _ := g.Send(data, from, to)
 
-	result, _ := g.Receive([]byte("A"))
+	result, _ := g.Receive(key)
 
 	if !bytes.Equal(data, result) {
 		t.Errorf("Expected % x got % x", data, result)
@@ -26,7 +26,9 @@ func TestSendAndReceive(t *testing.T) {
 func TestReceiveWithoutSend(t *testing.T) {
 	g := MustNew("test")
 
-	result, _ := g.Receive([]byte("A"))
+	key := []byte{1, 2}
+
+	result, _ := g.Receive(key)
 
 	if !bytes.Equal(nil, result) {
 		t.Errorf("Expected nil got % x", result)
