@@ -5,11 +5,13 @@ import (
 	"encoding/base64"
 )
 
+// MemoryPrivateTransactionManger implements an in memory representation of the Private Transaction Manager Interface
 type MemoryPrivateTransactionManger struct {
 	privDB map[string][]byte
 }
 
-// Send payload to list of to addresses
+// Send Sends a payload to list of "to" addresses
+// Implements the PrivateTransactionManager.Send() interface
 // Store payload into local repository, returning key (hash of payload)
 func (g *MemoryPrivateTransactionManger) Send(data []byte, from string, to []string) (out []byte, err error) {
 	h := sha512.New512_256()
@@ -26,6 +28,7 @@ func (g *MemoryPrivateTransactionManger) Send(data []byte, from string, to []str
 }
 
 // Receive Retrieve Payload for the key (data).
+// Implements the PrivateTransactionManager.Receive() interface
 func (g *MemoryPrivateTransactionManger) Receive(data []byte) ([]byte, error) {
 
 	b64Key := base64.StdEncoding.EncodeToString(data)
