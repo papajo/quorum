@@ -38,7 +38,7 @@ func (g *MemoryPrivateTransactionManger) Receive(data []byte) ([]byte, error) {
 }
 
 // MustNew Instantiates the in memory database
-func MustNew(configPath string) *MemoryPrivateTransactionManger {
+func MustNew() *MemoryPrivateTransactionManger {
 	return &MemoryPrivateTransactionManger{
 		privDB: make(map[string][]byte),
 	}

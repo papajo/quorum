@@ -6,8 +6,7 @@ import (
 )
 
 func TestSendAndReceive(t *testing.T) {
-
-	g := MustNew("test")
+	g := MustNew()
 
 	data := []byte{1, 2, 3, 4, 5}
 	to := []string{"A", "B", "C"}
@@ -20,11 +19,10 @@ func TestSendAndReceive(t *testing.T) {
 	if !bytes.Equal(data, result) {
 		t.Errorf("Expected % x got % x", data, result)
 	}
-
 }
 
 func TestReceiveWithoutSend(t *testing.T) {
-	g := MustNew("test")
+	g := MustNew()
 
 	key := []byte{1, 2}
 
@@ -33,5 +31,4 @@ func TestReceiveWithoutSend(t *testing.T) {
 	if !bytes.Equal(nil, result) {
 		t.Errorf("Expected nil got % x", result)
 	}
-
 }
