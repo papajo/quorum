@@ -46,22 +46,6 @@ func unixClient(socketPath string) *http.Client {
 	}
 }
 
-func RunNode(config *Config, workDir string) error {
-	if config.NodeAutostart {
-		launchNode(workDir, config.NodeCommand)
-	}
-
-	client := unixClient(config.SocketPath)
-	res, err := client.Get("http+unix://c/upcheck")
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 200 {
-		return nil
-	}
-	return errors.New("Constellation Node API did not respond to upcheck request")
-}
-
 type SendRequest struct {
 	Payload string   `json:"payload"`
 	From    string   `json:"from"`
@@ -85,6 +69,7 @@ type Client struct {
 	httpClient   *http.Client
 	publicKey    [32]byte
 	b64PublicKey string
+	baseURL      string
 }
 
 func (c *Client) do(path string, apiReq interface{}) (*http.Response, error) {
@@ -93,7 +78,7 @@ func (c *Client) do(path string, apiReq interface{}) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", "http+unix://c/"+path, buf)
+	req, err := http.NewRequest("POST", c.baseURL+path, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +88,17 @@ func (c *Client) do(path string, apiReq interface{}) (*http.Response, error) {
 		return nil, fmt.Errorf("Non-200 status code: %+v", res)
 	}
 	return res, err
+}
+
+func (c *Client) UpCheck() error {
+	res, err := c.httpClient.Get(c.baseURL + "upcheck")
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 200 {
+		return errors.New("Constellation Node API did not respond to upcheck request")
+	}
+	return nil
 }
 
 func (c *Client) SendPayload(pl []byte, b64From string, b64To []string) ([]byte, error) {
@@ -157,13 +153,30 @@ func (c *Client) ReceivePayload(key []byte) ([]byte, error) {
 	return pl, nil
 }
 
-func NewClient(publicKeyPath string, nodeSocketPath string) (*Client, error) {
-	b64PublicKey, err := ioutil.ReadFile(publicKeyPath)
+func NewClient(config *Config) (*Client, error) {
+	// read public key
+	b64PublicKey, err := ioutil.ReadFile(config.PublicKeys[0])
 	if err != nil {
 		return nil, err
 	}
+
+	// set httpClient; if socket is specified, used unix domain socket, else http
+	var httpClient *http.Client
+	var baseURL string
+	if len(config.Socket) > 0 {
+		httpClient = unixClient(config.Socket)
+		baseURL = "http+unix://c/"
+	} else {
+		httpClient = http.DefaultClient
+		baseURL = config.URL
+		if baseURL[len(baseURL)-1:] != "/" {
+			baseURL += "/"
+		}
+	}
+
 	return &Client{
-		httpClient:   unixClient(nodeSocketPath),
+		httpClient:   httpClient,
+		baseURL:      baseURL,
 		b64PublicKey: string(b64PublicKey),
 	}, nil
 }

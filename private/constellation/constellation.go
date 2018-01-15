@@ -40,20 +40,30 @@ func (g *Constellation) Receive(data []byte) ([]byte, error) {
 }
 
 func New(configPath string) (*Constellation, error) {
-	cfg, err := LoadConfig(configPath)
+	config, err := LoadConfig(configPath)
 	if err != nil {
 		return nil, err
 	}
-	err = RunNode(cfg, configPath)
+
+	// start the private transaction node
+	if config.NodeAutostart {
+		launchNode(configPath, config.NodeCommand)
+	}
+
+	// build the client
+	nodeClient, err := NewClient(config)
 	if err != nil {
 		return nil, err
 	}
-	n, err := NewClient(cfg.PublicKeys[0], cfg.Socket)
+
+	// ensure node is up
+	err = nodeClient.UpCheck()
 	if err != nil {
 		return nil, err
 	}
+
 	return &Constellation{
-		node: n,
+		node: nodeClient,
 		c:    cache.New(5*time.Minute, 5*time.Minute),
 	}, nil
 }

@@ -10,6 +10,7 @@ type Config struct {
 
 	NodeCommand   string `toml:"nodeCommand"`
 	NodeAutostart bool   `toml:"nodeAutostart"`
+	URL           string `toml:"url"`
 
 	// Deprecated
 	SocketPath    string `toml:"socketPath"`
@@ -27,6 +28,11 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 	if len(cfg.PublicKeys) == 0 {
 		cfg.PublicKeys = append(cfg.PublicKeys, cfg.PublicKeyPath)
+	}
+
+	// Default the Node command to constellation-node
+	if len(cfg.NodeCommand) == 0 {
+		cfg.NodeCommand = "constellation-node"
 	}
 	return cfg, nil
 }
