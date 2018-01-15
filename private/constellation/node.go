@@ -6,17 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/tv42/httpunix"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/tv42/httpunix"
 )
 
-func launchNode(cfgPath string) (*exec.Cmd, error) {
-	cmd := exec.Command("constellation-node", cfgPath)
+func launchNode(workDir, nodeCommand string) (*exec.Cmd, error) {
+	cmd := exec.Command(nodeCommand, workDir)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return nil, err
@@ -45,10 +46,13 @@ func unixClient(socketPath string) *http.Client {
 	}
 }
 
-func RunNode(cfgPath, nodeSocketPath string) error {
-	// launchNode(cfgPath)
-	c := unixClient(nodeSocketPath)
-	res, err := c.Get("http+unix://c/upcheck")
+func RunNode(config *Config, workDir string) error {
+	if config.NodeAutostart {
+		launchNode(workDir, config.NodeCommand)
+	}
+
+	client := unixClient(config.SocketPath)
+	res, err := client.Get("http+unix://c/upcheck")
 	if err != nil {
 		return err
 	}

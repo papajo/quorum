@@ -2,8 +2,9 @@ package constellation
 
 import (
 	"fmt"
-	"github.com/patrickmn/go-cache"
 	"time"
+
+	cache "github.com/patrickmn/go-cache"
 )
 
 type Constellation struct {
@@ -43,7 +44,7 @@ func New(configPath string) (*Constellation, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = RunNode(configPath, cfg.Socket)
+	err = RunNode(cfg, configPath)
 	if err != nil {
 		return nil, err
 	}

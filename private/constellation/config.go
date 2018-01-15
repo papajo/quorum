@@ -5,12 +5,15 @@ import (
 )
 
 type Config struct {
-	Socket         string   `toml:"socket"`
-	PublicKeys     []string `toml:"publickeys"`
+	Socket     string   `toml:"socket"`
+	PublicKeys []string `toml:"publickeys"`
+
+	NodeCommand   string `toml:"nodeCommand"`
+	NodeAutostart bool   `toml:"nodeAutostart"`
 
 	// Deprecated
-	SocketPath     string   `toml:"socketPath"`
-	PublicKeyPath  string   `toml:"publicKeyPath"`
+	SocketPath    string `toml:"socketPath"`
+	PublicKeyPath string `toml:"publicKeyPath"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
