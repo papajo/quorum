@@ -80,13 +80,10 @@ func New(path string) (*Constellation, error) {
 	} else {
 		cfg = &Config{
 			Socket: path,
+			Grpc: true,
 		}
 	}
-	grpc := true
-	if cfg != nil {
-		grpc = cfg.Grpc
-	}
-	n, err := NewClient(cfg, grpc)
+	n, err := NewClient(cfg, cfg.Grpc)
 	if err != nil {
 		return nil, err
 	}
