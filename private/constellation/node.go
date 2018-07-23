@@ -68,12 +68,7 @@ func httpClient() *http.Client {
 func grpcClient(socketPath string) *Client{
  	var client Client
  	client.usegrpc = true
- 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
- 	if err != nil {
- 		log.Fatal(err)
- 	}
- 	path := dir + string(os.PathSeparator) + socketPath
- 	client.grpcSocketPath = path
+ 	client.grpcSocketPath = socketPath
  	return &client
 }
 
