@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tv42/httpunix"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +16,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"log"
+	"github.com/blk-io/crux/protofiles"
 )
 
 func launchNode(cfgPath string) (*exec.Cmd, error) {
@@ -61,7 +65,34 @@ func httpClient() *http.Client {
 	}
 }
 
+func grpcClient(socketPath string) *Client{
+ 	var client Client
+ 	client.usegrpc = true
+ 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+ 	if err != nil {
+ 		log.Fatal(err)
+ 	}
+ 	path := dir + string(os.PathSeparator) + socketPath
+ 	client.grpcSocketPath = path
+ 	return &client
+}
+
 func UpCheck(c *Client) error {
+	if c.usegrpc {
+		var conn *grpc.ClientConn
+		conn, err := grpc.Dial(fmt.Sprintf("passthrough:///unix://%s", c.grpcSocketPath), grpc.WithInsecure())
+		if err != nil {
+			log.Fatalf("did not connect: %s", err)
+		}
+		defer conn.Close()
+		uc := protofiles.UpCheckResponse{}
+		_, err = protofiles.NewClientClient(conn).Upcheck(context.Background(), &uc)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Crux Node gRPC API did not respond to upcheck request %s", err))
+		}
+		return nil
+	}
+
 	res, err := c.httpClient.Get(c.BaseURL + "upcheck")
 	if err != nil {
 		return err
@@ -75,6 +106,27 @@ func UpCheck(c *Client) error {
 type Client struct {
 	httpClient *http.Client
 	BaseURL    string
+	usegrpc bool
+	grpcSocketPath string
+}
+
+func (c *Client) SendPayloadGrpc(pl []byte, b64From string, b64To []string) ([]byte, error){
+	var conn *grpc.ClientConn
+	conn, err := grpc.Dial(fmt.Sprintf("passthrough:///unix://%s", c.grpcSocketPath), grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %s", err)
+	}
+	defer conn.Close()
+	cli := protofiles.NewClientClient(conn)
+
+	if cli == nil{
+		return nil, errors.New("Crux client is nil")
+	}
+	resp, err := cli.Send(context.Background(), &protofiles.SendRequest{Payload: pl, From: b64From,To: b64To})
+	if err != nil {
+		return nil, fmt.Errorf("Send Payload failed: %v", err)
+	}
+	return resp.Key, nil
 }
 
 func (c *Client) SendPayload(pl []byte, b64From string, b64To []string) ([]byte, error) {
@@ -102,6 +154,25 @@ func (c *Client) SendPayload(pl []byte, b64From string, b64To []string) ([]byte,
 	return body, err
 }
 
+func (c *Client) ReceivePayloadGrpc(data []byte) ([]byte, interface{}) {
+	var conn *grpc.ClientConn
+	conn, err := grpc.Dial(fmt.Sprintf("passthrough:///unix://%s", c.grpcSocketPath), grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %s", err)
+	}
+	defer conn.Close()
+	cli := protofiles.NewClientClient(conn)
+
+	if cli == nil{
+		return nil, errors.New("Crux client is nil")
+	}
+	resp, err := cli.Receive(context.Background(), &protofiles.ReceiveRequest{Key: data})
+	if err != nil {
+		return nil, fmt.Errorf("Receive Payload failed: %v", err)
+	}
+	return resp.Payload, nil
+}
+
 func (c *Client) ReceivePayload(key []byte) ([]byte, error) {
 	req, err := http.NewRequest("GET", c.BaseURL+"receiveraw", nil)
 	if err != nil {
@@ -122,7 +193,20 @@ func (c *Client) ReceivePayload(key []byte) ([]byte, error) {
 	return body, err
 }
 
-func NewClient(config *Config) (*Client, error) {
+func NewClient(config *Config, grpc bool) (*Client, error) {
+	if grpc{
+		var path string
+		var err error
+		if config.WorkDir == "" {
+			path, err = filepath.Abs(filepath.Dir(os.Args[0]))
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			path = config.WorkDir
+		}
+		return grpcClient(filepath.Join(path, config.Socket)), nil
+	}
 	var client *http.Client
 	var baseURL string
 	if config.Socket != "" {
