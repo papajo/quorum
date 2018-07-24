@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 	"log"
-	"github.com/blk-io/crux/protofiles"
+	"github.com/blk-io/chimera-api/protofiles"
 )
 
 func launchNode(cfgPath string) (*exec.Cmd, error) {
