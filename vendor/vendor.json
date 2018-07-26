@@ -51,10 +51,10 @@
 			"revisionTime": "2017-02-10T01:56:32Z"
 		},
 		{
-			"checksumSHA1": "9dDgqoDQeaJ4xllIv6SZvpGd/1s=",
-			"path": "github.com/blk-io/chimera-api/protofiles",
-			"revision": "deee5615cef7315a5206205e046a815cdaf29ba2",
-			"revisionTime": "2018-07-24T14:01:20Z"
+			"checksumSHA1": "GXIfRnqZyuBUNDujior13FiKOzI=",
+			"path": "github.com/blk-io/chimera-api/chimera",
+			"revision": "c4b3378fa984dafdd6780ccb78b3198de7b7277e",
+			"revisionTime": "2018-07-26T11:25:59Z"
 		},
 		{
 			"checksumSHA1": "fIpm6Vr5a8kgr22gWkQx7vKUTyU=",

@@ -2,11 +2,11 @@
 // source: grpc.proto
 
 /*
-Package protofiles is a reverse proxy.
+Package chimera is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package protofiles
+package chimera
 
 import (
 	"io"
