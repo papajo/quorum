@@ -24,7 +24,6 @@ func (g *Constellation) Send(data []byte, from string, to []string) (out []byte,
 	if g.isConstellationNotInUse {
 		return nil, ErrConstellationIsntInit
 	}
-	out, err = g.node.SendPayload(data, from, to)
 	if g.node.usegrpc{
 		out, err = g.node.SendPayloadGrpc(data, from, to)
 	} else {
